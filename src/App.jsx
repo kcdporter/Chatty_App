@@ -6,6 +6,9 @@ import ChatBar from './ChatBar.jsx';
 class App extends Component {
   constructor (props){
     super(props);
+    this.submitNewMessage = this.submitNewMessage.bind(this);
+    // this.submitNewUser = this.submitNewUser.bind(this);
+
     this.state = {
       loading:true,
       user:"",
@@ -52,8 +55,22 @@ class App extends Component {
           content: "Anonymous2 changed their name to NotFunny",
         },
       ]};
-      console.log("currentstate", this.state);
   }
+
+  submitNewMessage(event){
+    if(event.key === 'Enter'){
+      const newMessage = {
+        id: Math.floor(Math.random()*100000),
+        user: this.state.user,
+        content: event.target.value}
+      const messages = [...this.state.messages, newMessage]
+      this.setState({messages: messages})
+    }
+  }
+
+  // submitNewUser(event){
+  //   this.setState({user: event.target.value});
+  // }
 
   componentDidMount(){
     setTimeout(() => {
@@ -63,6 +80,7 @@ class App extends Component {
       this.setState({messages:messages, loading:false});
     }, 1000);
   }
+
 
   render() {
     if (this.state.loading){
@@ -74,7 +92,7 @@ class App extends Component {
         </nav>
         <MessageList messages={this.state.messages} />
         <h1>Loading...</h1>
-        <ChatBar/>
+        <ChatBar onKeyPress = {(event) => this.submitNewMessage(event)} user={this.state.user}/>
         </React.Fragment>
       );
     } else {
@@ -85,7 +103,7 @@ class App extends Component {
           <a href="/" className="navbar-brand">Chatty</a>
         </nav>
         <MessageList messages={this.state.messages} />
-        <ChatBar user={this.state.user} />
+        <ChatBar onKeyPress={(event) => this.submitNewMessage(event)} />
         </React.Fragment>
       );
     }

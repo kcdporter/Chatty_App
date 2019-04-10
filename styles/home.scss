@@ -1,9 +1,9 @@
 @import url("https://fonts.googleapis.com/css?family=Open+Sans:400,400italic,700");
 @import url("https://cdnjs.cloudflare.com/ajax/libs/normalize/4.2.0/normalize.min.css");
 
-$CompanyColor: rgb(17, 127, 200);
+$CompanyColor: #540D6E;
 body {
-  background: white;
+  background-image: linear-gradient(90deg, #FFD23F,  #EE4266);;
   color: black;
   font-family: 'Open Sans', sans-serif;
   font-size: 14px;
@@ -67,7 +67,8 @@ body {
 
 .navbar {
   background: $CompanyColor;
-  border-bottom: 1px solid black;
+  color: #FFD23F;
+  border-bottom: 1px solid #EE4266;
   height: 60px;
   left: 0;
   padding: 0 10px;
