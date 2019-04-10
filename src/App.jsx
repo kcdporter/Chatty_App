@@ -65,6 +65,7 @@ class App extends Component {
         content: event.target.value}
       const messages = [...this.state.messages, newMessage]
       this.setState({messages: messages})
+      event.target.value='';
     }
   }
 
