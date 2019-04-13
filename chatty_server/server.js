@@ -1,28 +1,60 @@
 const express = require('express');
-const webSocket = require('ws');
-
-// Set the port to 3001
+const WebSocket = require('ws');
 const PORT = 3001;
+const uuid = require('uuid/v1');
 
-// Create a new express server
+//setting express server to serve assests from the public folder
 const server = express()
-   // Make the express server serve static assets (html, javascript, css) from the /public folder
-  .use(express.static('public'))
-  .listen(PORT, '0.0.0.0', 'localhost', () => console.log(`Listening on ${ PORT }`));
-
-// Create the WebSockets server
-const WebSocketServer = new webSocket.Server({server});
+.use(express.static('public'))
+.listen(PORT, '0.0.0.0', 'localhost', () => console.log(`Listening on ${ PORT }`));
 
 
-// Set up a callback that will run when a client connects to the server
-// When a client connects they are assigned a socket, represented by
-// the ws parameter in the callback.
-WebSocketServer.on('connection', () => {
+//creating the WobSockets server
+const wss = new WebSocket.Server({server});
+
+
+wss.on('connection', (ws) => {
   console.log('Client connected');
-  WebSocketServer.on( 'message', function incomingMessage(message) {
-    console.log("Server side:", message);
-  })
+  ws.on('message', (msg) => {
+    let msgRaw = JSON.parse(msg);
+    let outgoingMsg;
+    let sync = true;
+    switch(msgRaw.type) {
+      case 'message':
+        outgoingMsg = {
+          id: uuid(),
+          username: msgRaw.username,
+          content: msgRaw.content,
+          type: msgRaw.type
+        }
+        break;
+      case 'globalNotification':
+        outgoingMsg = {
+          id: uuid(),
+          content: msgRaw.content,
+          type: msgRaw.type
+        }
+        break;
+      default:
+        outgoingMsg = {
+          id: uuid(),
+          content: 'Sorry, you can\'t do that.',
+          type: 'error'
+        }
+    }
+    if (sync) {
+      wss.broadcast(JSON.stringify(outgoingMsg));
+    }
+  });
 
-  // Set up a callback for when a client closes the socket. This usually means they closed their browser.
-  WebSocketServer.on('close', () => console.log('Client disconnected'));
-});
+  ws.on('close', () => console.log('Client disconnected'));
+})
+
+//set a broadcast to each connected client for new incoming messages
+wss.broadcast = function broadcast(message){
+  wss.clients.forEach(function each(client){
+    if (client.readyState === WebSocket.open){
+      client.send(message);
+    }
+  })
+}
