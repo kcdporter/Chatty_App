@@ -14,7 +14,10 @@ const wss = new WebSocket.Server({server});
 
 
 wss.on('connection', (ws) => {
-  console.log('Client connected');
+  let welcome = {
+    nOfUsers: wss.clients.size
+  }
+  wss.broadcast(JSON.stringify(welcome))
   ws.on('message', (msg) => {
     let msgRaw = JSON.parse(msg);
     let outgoingMsg;
@@ -23,16 +26,18 @@ wss.on('connection', (ws) => {
       case 'message':
         outgoingMsg = {
           id: uuid(),
-          username: msgRaw.username,
+          user: msgRaw.user,
           content: msgRaw.content,
-          type: msgRaw.type
+          type: msgRaw.type,
+          nOfUsers: wss.clients.size
         }
         break;
       case 'globalNotification':
         outgoingMsg = {
           id: uuid(),
           content: msgRaw.content,
-          type: msgRaw.type
+          type: msgRaw.type,
+          nOfUsers:wss.clients.size
         }
         break;
       default:
@@ -46,14 +51,18 @@ wss.on('connection', (ws) => {
       wss.broadcast(JSON.stringify(outgoingMsg));
     }
   });
-
-  ws.on('close', () => console.log('Client disconnected'));
+  ws.on('close', () => {
+  let goodbye = {
+    nOfUsers: wss.clients.size
+  }
+  wss.broadcast(JSON.stringify(goodbye))
+  });
 })
 
 //set a broadcast to each connected client for new incoming messages
 wss.broadcast = function broadcast(message){
   wss.clients.forEach(function each(client){
-    if (client.readyState === WebSocket.open){
+    if (client.readyState === WebSocket.OPEN){
       client.send(message);
     }
   })
