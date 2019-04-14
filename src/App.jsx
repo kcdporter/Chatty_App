@@ -2,112 +2,76 @@ import React, {Component} from 'react';
 
 import MessageList from './MessageList.jsx';
 import ChatBar from './ChatBar.jsx';
+const uuid = require('uuid/v1');
 
 class App extends Component {
   constructor (props){
     super(props);
-    this.submitNewMessage = this.submitNewMessage.bind(this);
-    // this.submitNewUser = this.submitNewUser.bind(this);
 
     this.state = {
-      loading:true,
-      user:"",
-      error:"",
-      messages:[
-        {
-          id: 1,
-          type: "incomingMessage",
-          content: "I won't be impressed with technology until I can download food.",
-          user: "Anonymous1"
-        },
-        {
-          id: 2,
-          type: "incomingNotification",
-          content: "Anonymous1 changed their name to nomnom",
-        },
-        {
-          id: 3,
-          type: "incomingMessage",
-          content: "I wouldn't want to download Kraft Dinner. I'd be scared of cheese packet loss.",
-          user: "Anonymous2"
-        },
-        {
-          id: 4,
-          type: "incomingMessage",
-          content: "...",
-          user: "nomnom"
-        },
-        {
-          id: 5,
-          type: "incomingMessage",
-          content: "I'd love to download a fried egg, but I'm afraid encryption would scramble it",
-          user: "Anonymous2"
-        },
-        {
-          id: 6,
-          type: "incomingMessage",
-          content: "This isn't funny. You're not funny",
-          user: "nomnom"
-        },
-        {
-          id: 7,
-          type: "incomingNotification",
-          content: "Anonymous2 changed their name to NotFunny",
-        },
-      ]};
+      id: uuid(),
+      messages:[],
+      user:'Anonymous',
+      nOfUsers:0,
+      };
+    this.addmsg = this.addmsg.bind(this);
+    this.addUser = this.addUser.bind(this);
   }
 
-  submitNewMessage(event){
+  componentDidMount(){
+    this.socket = new WebSocket("ws://localhost:3001");
+    this.socket.onmessage = (event) => {
+      let incomingMsg = JSON.parse(event.data);
+      const messages = [...this.state.messages, incomingMsg];
+      this.setState({messages: messages, nOfUsers:incomingMsg.nOfUsers});
+    }
+  }
+
+  addUser = event => {
+    if (event.key === 'Enter' && event.target.value !== this.state.user && event.target.value.trim()) {
+      this.setState ({user:event.target.value});
+      const notifictionMsg = {
+        user: '',
+        content: `${this.state.user} has changed their name to ${event.target.value}`,
+        type: "globalNotification",
+      };
+      this.socket.send(JSON.stringify(notifictionMsg))
+    }
+  };
+
+  addmsg = event => {
     if(event.key === 'Enter'){
-      const newMessage = {
-        id: Math.floor(Math.random()*100000),
+      const newMsg = {
         user: this.state.user,
-        content: event.target.value}
-      const messages = [...this.state.messages, newMessage]
+        content: event.target.value,
+        type: 'message',
+        nOfUsers:this.state.nOfUsers,
+      }
+      const messages = [...this.state.messages]
       this.setState({messages: messages})
+      this.socket.send(JSON.stringify(newMsg))
       event.target.value='';
     }
   }
 
-  // submitNewUser(event){
-  //   this.setState({user: event.target.value});
-  // }
-
-  componentDidMount(){
-    setTimeout(() => {
-      console.log("Stimulating incoming message")
-      const newMessage = {id:8, user:"Juanita", content:"Hello there!"}
-      const messages = [...this.state.messages, newMessage]
-      this.setState({messages:messages, loading:false});
-    }, 1000);
-  }
-
 
   render() {
-    if (this.state.loading){
-      return (
-        <React.Fragment>
-        <h1>Hello React :)</h1>
-        <nav className="navbar">
-          <a href="/" className="navbar-brand">Chatty</a>
-        </nav>
-        <MessageList messages={this.state.messages} />
-        <h1>Loading...</h1>
-        <ChatBar onKeyPress = {(event) => this.submitNewMessage(event)} user={this.state.user}/>
-        </React.Fragment>
+    return(
+      <React.Fragment>
+      <h1>Welcome, {this.state.user}</h1>
+      <nav className="navbar">
+        <a href="/" className="navbar-brand">Chatty</a>
+        <p>There are {(this.state.nOfUsers)} users to share your thoughts with!</p>
+      </nav>
+      <MessageList
+      messages={this.state.messages}
+      user={this.state.users} />
+      <ChatBar
+      onKeyPress={(event) => this.addmsg(event)}
+      newUser={(event) => this.addUser(event)}
+      username={this.state.user}/>
+      </React.Fragment>
       );
-    } else {
-      return (
-        <React.Fragment>
-        <h1>Hello React :)</h1>
-        <nav className="navbar">
-          <a href="/" className="navbar-brand">Chatty</a>
-        </nav>
-        <MessageList messages={this.state.messages} />
-        <ChatBar onKeyPress={(event) => this.submitNewMessage(event)} />
-        </React.Fragment>
-      );
-    }
   }
 }
 export default App;

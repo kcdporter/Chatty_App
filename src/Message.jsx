@@ -1,6 +1,6 @@
 import React, {Component} from 'react';
 
-class ChatBar extends Component {
+class Message extends Component {
   render() {
     return (
       <main className="messages">
@@ -12,4 +12,4 @@ class ChatBar extends Component {
     )
   }
 }
-export default ChatBar;
+export default Message;
